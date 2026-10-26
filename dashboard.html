@@ -92,7 +92,6 @@
             const tbody = document.getElementById('cardsTableBody');
 
             try {
-                // استخدام رابط ديناميكي يعمل محلياً وعلى السيرفر السحابي تلقائياً
                 const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                     ? 'http://localhost:5000/api/stop-cards' 
                     : '/api/stop-cards';
@@ -182,4 +181,32 @@
             const table = document.getElementById('stopCardsTable');
             if (!table) return;
 
-            let csv =
+            let csv = [];
+            let rows = table.querySelectorAll('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/,/g, '');
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(','));
+            }
+
+            let csvFile = new Blob(["\uFEFF" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            let downloadLink = document.createElement('a');
+            
+            downloadLink.download = `IDC_Stop_Cards_${new Date().toISOString().slice(0,10)}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // تشغيل دالة جلب البيانات عند فتح الصفحة مباشرة
+        fetchCards();
+    </script>
+</body>
+</html>
