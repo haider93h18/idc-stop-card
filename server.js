@@ -70,6 +70,15 @@ app.get('/api/stop-cards', (req, res) => {
     });
 });
 
+// توجيه الصفحة الرئيسية لفتح index.html تلقائياً
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+// وإذا كنت تريد توجيه مباشر للداشبورد أيضاً
+app.get('/dashboard', (req, res) => {
+    res.sendFile(__dirname + '/dashboard.html');
+});
 // تشغيل السيرفر مرة واحدة فقط بالطريقة الصحيحة المتوافقة مع Render
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 خادم نظام الستوب كارد يعمل بكفاءة على المنفذ: ${PORT}`);
