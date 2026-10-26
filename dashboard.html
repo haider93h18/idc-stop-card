@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة استعراض البطاقات - شركة الحفر العراقية (IDC)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-yellow-400">سجل بطاقات الستوب كارد (IDC)</h1>
+                <p class="text-sm text-slate-400 mt-1">استعراض ومتابعة الملاحظات المرصودة في المنصات مع التفاصيل الكاملة</p>
+            </div>
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded-lg text-sm transition duration-200">
+                + إضافة بطاقة جديدة
+            </a>
+        </div>
+
+        <!-- أدوات البحث والتصفية المحدثة -->
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl mb-6 flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+                <input type="text" id="searchInput" placeholder="ابحث برقم البطاقة، اسم المُبلّغ، أو المكان..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-yellow-400"
+                    onkeyup="filterCards()">
+            </div>
+
+            <!-- تصفية حسب حالة البطاقة (Status Filter) -->
+            <div class="w-full md:w-48">
+                <select id="statusFilter" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-yellow-400"
+                    onchange="filterCards()">
+                    <option value="">كل الحالات</option>
+                    <option value="Open">مفتوحة (Open)</option>
+                    <option value="Closed">مغلقة (Closed)</option>
+                    <option value="Positive">إيجابية (Positive)</option>
+                </select>
+            </div>
+
+            <!-- تصفية حسب مستوى الخطورة -->
+            <div class="w-full md:w-48">
+                <select id="riskFilter" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-yellow-400"
+                    onchange="filterCards()">
+                    <option value="">كل مستويات الخطورة</option>
+                    <option value="Low">منخفض (Low)</option>
+                    <option value="Medium">متوسط (Medium)</option>
+                    <option value="High">عالي (High)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- جدول البطاقات مع عمود الحالة -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900/50 text-slate-400 text-sm border-b border-slate-700">
+                            <th class="p-4">رقم البطاقة</th>
+                            <th class="p-4">الحالة</th>
+                            <th class="p-4">اسم المُبلّغ</th>
+                            <th class="p-4">رقم المنصة</th>
+                            <th class="p-4">نوع الملاحظة</th>
+                            <th class="p-4">مستوى الخطورة</th>
+                            <th class="p-4">تفاصيل الموقع</th>
+                            <th class="p-4">وصف الملاحظة</th>
+                            <th class="p-4">التاريخ والوقت</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cardsTableBody" class="divide-y divide-slate-700 text-sm">
+                        <tr>
+                            <td colspan="9" class="p-6 text-center text-slate-400">جاري جلب البيانات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let allCards = [];
+
+        async function fetchCards() {
+            const tbody = document.getElementById('cardsTableBody');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/stop-cards');
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    allCards = result.data;
+                    displayCards(allCards);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-400">فشل في جلب البيانات من الخادم.</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-red-400">تعذر الاتصال بالسيرفر المحلي (تأكد من تشغيل Node.js).</td></tr>`;
+            }
+        }
+
+        function displayCards(cards) {
+            const tbody = document.getElementById('cardsTableBody');
+
+            if (cards.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">لا توجد بطاقات مطابقة للبحث.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            cards.forEach(card => {
+                // تلوين شارة الخطورة
+                let riskBadge = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                if (card.risk_level === 'High') riskBadge = 'bg-red-500/20 text-red-400 border-red-500/30';
+                if (card.risk_level === 'Medium') riskBadge = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+
+                // تلوين شارة الحالة (Open, Closed, Positive)
+                let statusBadge = 'bg-amber-500/20 text-amber-400 border-amber-500/30'; // Open
+                let statusText = card.status || 'Open';
+                if (statusText === 'Closed') statusBadge = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+                if (statusText === 'Positive') statusBadge = 'bg-sky-500/20 text-sky-400 border-sky-500/30';
+
+                const row = `
+                    <tr class="hover:bg-slate-750 transition">
+                        <td class="p-4 font-semibold text-yellow-400">${card.card_number}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs border font-medium ${statusBadge}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="p-4 text-slate-300">${card.reporter_name || 'غير محدد'}</td>
+                        <td class="p-4">منصة ${card.rig_id}</td>
+                        <td class="p-4">${card.observation_type}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs border ${riskBadge}">
+                                ${card.risk_level}
+                            </span>
+                        </td>
+                        <td class="p-4 text-slate-300">${card.location_details}</td>
+                        <td class="p-4 text-slate-200 max-w-xs truncate" title="${card.description}">${card.description}</td>
+                        <td class="p-4 text-slate-400 whitespace-nowrap">${new Date(card.observation_datetime).toLocaleString('ar-IQ')}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function filterCards() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const selectedRisk = document.getElementById('riskFilter').value;
+            const selectedStatus = document.getElementById('statusFilter').value;
+
+            const filtered = allCards.filter(card => {
+                const matchesSearch = 
+                    (card.card_number && card.card_number.toLowerCase().includes(searchText)) ||
+                    (card.reporter_name && card.reporter_name.toLowerCase().includes(searchText)) ||
+                    (card.location_details && card.location_details.toLowerCase().includes(searchText)) ||
+                    (card.rig_id && card.rig_id.toString().includes(searchText));
+
+                const matchesRisk = selectedRisk === "" || card.risk_level === selectedRisk;
+                const matchesStatus = selectedStatus === "" || (card.status || 'Open') === selectedStatus;
+
+                return matchesSearch && matchesRisk && matchesStatus;
+            });
+
+            displayCards(filtered);
+        }
+
+        fetchCards();
+    </script>
+</body>
+</html>

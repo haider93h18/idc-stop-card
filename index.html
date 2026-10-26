@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة الستوب كارد - شركة الحفر العراقية (IDC)</title>
+    <!-- تضمين مكتبة Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ربط ملف الـ Manifest لتثبيت التطبيق -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#eab308">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-slate-800 border border-slate-700 shadow-2xl rounded-2xl w-full max-w-lg p-6 md:p-8">
+        
+        <!-- رأس الصفحة -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-yellow-400">شركة الحفر العراقية - IDC</h1>
+            <p class="text-sm text-slate-400 mt-1">نظام رصد الملاحظات وسلوكات العمل (STOP Card)</p>
+        </div>
+
+        <!-- نموذج إرسال البطاقة -->
+        <form id="stopCardForm" class="space-y-4">
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">اسم المُبلّغ (اختياري):</label>
+                <input type="text" id="reporter_name" placeholder="مثلاً: أحمد محمد" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">رقم المنصة (Rig ID):</label>
+                <input type="number" id="rig_id" required placeholder="مثلاً: 31" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">نوع الملاحظة:</label>
+                <select id="observation_type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+                    <option value="Unsafe Act">سلوك غير آمن (Unsafe Act)</option>
+                    <option value="Unsafe Condition">ظرف غير آمن (Unsafe Condition)</option>
+                    <option value="Safe Practice">ممارسة آمنة (Safe Practice)</option>
+                </select>
+            </div>
+
+            <!-- حقل حالة الستوب كارد -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">حالة البطاقة (Status):</label>
+                <select id="status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+                    <option value="Open">مفتوحة (Open)</option>
+                    <option value="Closed">مغلقة / معالجة (Closed)</option>
+                    <option value="Positive">ملاحظة إيجابية (Positive)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">تاريخ ووقت الرصد:</label>
+                <input type="datetime-local" id="observation_datetime" required 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">تفاصيل الموقع (المكان بدقة):</label>
+                <input type="text" id="location_details" required placeholder="مثلاً: منصة الحفر - بجانب مضخة الطين" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">مستوى الخطورة:</label>
+                <select id="risk_level" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400">
+                    <option value="Low">منخفض (Low)</option>
+                    <option value="Medium">متوسط (Medium)</option>
+                    <option value="High">عالي (High)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">وصف الملاحظة:</label>
+                <textarea id="description" rows="3" required placeholder="اكتب تفاصيل ما لاحظته..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-yellow-400"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-3 rounded-lg transition duration-200 shadow-lg">
+                إرسال البطاقة
+            </button>
+
+        </form>
+
+        <div id="responseMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
+
+    </div>
+
+    <!-- سكربت تسجيل الـ Service Worker لتثبيت التطبيق -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker Registered'))
+                .catch((err) => console.log('Service Worker Failed:', err));
+        }
+    </script>
+
+    <!-- سكربت إرسال بيانات النموذج -->
+    <script>
+        document.getElementById('stopCardForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const cardData = {
+                reporter_name: document.getElementById('reporter_name').value,
+                rig_id: parseInt(document.getElementById('rig_id').value),
+                observation_type: document.getElementById('observation_type').value,
+                status: document.getElementById('status').value,
+                observation_datetime: document.getElementById('observation_datetime').value,
+                location_details: document.getElementById('location_details').value,
+                description: document.getElementById('description').value,
+                risk_level: document.getElementById('risk_level').value
+            };
+
+            const msgDiv = document.getElementById('responseMessage');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/stop-cards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cardCardData = cardData)
+                });
+
+                const result = await response.json();
+
+                msgDiv.classList.remove('hidden');
+                if (response.ok) {
+                    msgDiv.className = 'mt-4 text-center text-sm font-medium text-green-400';
+                    msgDiv.innerText = '✅ ' + result.message;
+                    document.getElementById('stopCardForm').reset();
+                } else {
+                    msgDiv.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                    msgDiv.innerText = '❌ ' + (result.message || 'حدث خطأ أثناء الإرسال');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                msgDiv.classList.remove('hidden');
+                msgDiv.className = 'mt-4 text-center text-sm font-medium text-red-400';
+                msgDiv.innerText = '❌ تعذر الاتصال بالسيرفر المحلي (تأكد من تشغيل Node.js)';
+            }
+        });
+    </script>
+</body>
+</html>
