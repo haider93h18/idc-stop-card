@@ -11,11 +11,12 @@ app.use(cors());
 
 const PORT = process.env.PORT || 5000;
 
+// الاتصال بقاعدة البيانات SQLite وتخزينها بملف آمن
 const db = new sqlite3.Database('./idc_safety.db', (err) => {
     if (err) {
-        console.error('❌ خطأ في الاتصال بـ SQLite:', err.message);
+        console.error('خطأ في الاتصال بقاعدة البيانات:', err.message);
     } else {
-        console.log('✅ تم الاتصال بقاعدة بيانات SQLite المحلية بنجاح.');
+        console.log('📦 تم الاتصال بقاعدة البيانات بنجاح.');
         initDatabase();
     }
 });
@@ -69,6 +70,7 @@ app.get('/api/stop-cards', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+// تشغيل السيرفر مرة واحدة فقط بالطريقة الصحيحة المتوافقة مع Render
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 خادم نظام الستوب كارد يعمل بكفاءة على المنفذ: ${PORT}`);
 });
