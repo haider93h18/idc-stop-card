@@ -92,10 +92,10 @@
             const tbody = document.getElementById('cardsTableBody');
 
             try {
-                // استخدام الرابط السحابي الكامل مباشرة لضمان نجاح الاتصال على Render أو المحلي
+                // استخدام رابط Fly.io الجديد للسيرفر السحابي، أو Localhost عند التطوير المحلي
                 const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                     ? 'http://localhost:5000/api/stop-cards' 
-                    : 'https://idc-stop-card.onrender.com/api/stop-cards';
+                    : 'https://stop-cards.fly.dev/api/stop-cards';
 
                 const response = await fetch(apiUrl);
                 const result = await response.json();
