@@ -10,6 +10,9 @@ app.use(express.json());
 app.use(cors());
 
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
 // الاتصال بقاعدة البيانات SQLite وتخزينها بملف آمن
 const db = new sqlite3.Database('./idc_safety.db', (err) => {
